@@ -12,8 +12,8 @@ from jose import JWTError, jwt
 # from sqlalchemy.orm import Session
 
 from sqlalchemy.orm import Session
-from . import database, models, config
-from functools import lru_cache
+from . import database, models
+from .config import get_settings
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 3600
@@ -27,9 +27,7 @@ def get_db():
     finally:
         session.close()
 
-@lru_cache
-def get_settings():
-    return config.Settings()
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 

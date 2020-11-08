@@ -12,6 +12,7 @@ class User(BaseModel):
     full_name: Optional[str] = Field(None, example="Color Red", alias="full name", title="full name")
     active: Optional[bool] 
     requests_made: Optional[int] = Field(None, alias="requests made")
+    tweets: Optional[list]
 
     class Config:
         orm_mode = True
@@ -34,17 +35,19 @@ class Token(BaseModel):
 
 class TwitterUser(BaseModel):
     id: str
-    name: str
-    screen_name: str = Field(..., alias="screen name")
+    name: Optional[str]
+    screen_name: str = Field(None, alias="username")
+    username: str = Field(None)
     location: Optional[str]
     description: Optional[str]
-    protected: bool
-    followers_count: int = Field(..., alias="followers")
-    friends_count: int = Field(..., alias="following")
-    favourites_count: int = Field(..., alias="favourites")
-    verified: bool
-    statuses_count: int = Field(..., alias="tweets")
-    created_at: datetime = Field(..., alias="created at")
+    protected: Optional[bool]
+    following: Optional[bool] = Field(None, alias="following")
+    followers_count: Optional[int] = Field(None, alias="followers")
+    friends_count: Optional[int] = Field(None, alias="users they follow")
+    favourites_count: Optional[int] = Field(None, alias="favourites")
+    verified: Optional[bool]
+    statuses_count: Optional[int] = Field(None, alias="tweets")
+    created_at: Optional[str] = Field(None, alias="created at")
 
     class Config:
         allow_population_by_field_name = True
@@ -53,13 +56,13 @@ class Tweet(BaseModel):
     created_at: str = Field(..., alias="created at")
     id: int
     text: str
-    source: str
+    source: Optional[str]
     user: TwitterUser
-    place: str
+    place: Optional[str]
     is_quote_status: bool = Field(..., alias="tweet is a quote")
     retweet_count: int = Field(..., alias="retweets")
-    favourite_count: int = Field(..., alias='favourites')
-    favourited: bool
+    favorite_count: int = Field(..., alias='favorites')
+    favorited: bool
     retweeted: bool
 
     class Config:

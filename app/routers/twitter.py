@@ -1,22 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException, Form
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 # from fastapi.responses import JSONResponse
 # from sqlalchemy.orm import Session
 # from app.main import get_db
-from ..models import User
-from ..schemas import Tweet, TwitterUser
+from ..models import User, Tweet
+from ..schemas import Tweet as TweetSchema, TwitterUser
 
 import requests
 from requests_oauthlib import OAuth1
 # from .auth import get_current_user
 from app import Session, get_settings, get_db, get_current_user
 from app.config import Settings
+from pprint import pprint
+from typing import List, Optional, Union
 
 
 # auth = OAuth1(client_key=API_KEY, client_secret=API_SECRET, resource_owner_key= "", resource_owner_secret="")
 
 router = APIRouter()
 
-def request_token(config: Settings = Depends(get_settings))->str:
+def request_token(
+                  config: Settings = Depends(get_settings)
+                 )-> str:
     url = 'https://api.twitter.com/oauth/request_token'
     auth = OAuth1(client_key=config.API_KEY, client_secret=config.API_SECRET, callback_uri="oob")
 
@@ -36,10 +40,11 @@ def request_token(config: Settings = Depends(get_settings))->str:
 
 
 @router.get("/login")
-async def twitter_login_step_1(token: str = Depends(request_token),
-                        user: User = Depends(get_current_user),
-                        session: Session = Depends(get_db)
-                        ):
+async def twitter_login_step_1(
+                               token: str = Depends(request_token),
+                               user: User = Depends(get_current_user),
+                               session: Session = Depends(get_db)
+                              )-> dict:
     user.oauth_token = token
     session.commit()
     authorize_url = f'https://api.twitter.com/oauth/authorize?oauth_token={token}'
@@ -52,7 +57,7 @@ async def twitter_login_step_1(token: str = Depends(request_token),
 async def twitter_login_step_2(oauth_verifier:str, 
                     session: Session = Depends(get_db),
                     user: User = Depends(get_current_user)
-                    ):
+                    )-> dict:
     oauth_token = user.oauth_token
     if not oauth_token:
         raise HTTPException(400, detail="It seems you've not completed step one. Please go back and complete it.")
@@ -87,29 +92,100 @@ async def twitter_login_step_2(oauth_verifier:str,
     
     return {"success": f"Your Twitter login is complete, you can now use Twitter from here"}
 
-def get_oauth1_token(user:User):
-    config: Settings = get_settings()
-    auth = OAuth1(config.API_KEY, 
-                  config.API_SECRET,
-                  user.token,
-                  user.token_secret
-                 )
-    return auth
+# def get_oauth1_token(user:User):
+#     config: Settings = get_settings()
+#     auth = OAuth1(config.API_KEY, 
+#                   config.API_SECRET,
+#                   user.token,
+#                   user.token_secret
+#                  )
+#     return auth
 
-@router.get("/tweet", response_model=Tweet)
-async def make_tweet(tweet: str = Form(...),
-                     user: User = Depends(get_current_user)
-                     ):
+@router.get("/make_tweet", response_model=TweetSchema)
+async def make_tweet(tweet: str,
+                     user: User = Depends(get_current_user),
+                     session: Session = Depends(get_db)
+                     )-> TweetSchema:
+
+    if not user.active:
+        raise HTTPException(401, detail="Your account seems to be inactive, please login with twitter to make tweets")
+
     url = "https://api.twitter.com/1.1/statuses/update.json"
     params = dict(status=tweet)
-    auth = get_oauth1_token(user)
+    auth = user.get_oauth1_token()
 
     r = requests.post(url, params=params, auth=auth)
     if not r.ok:
         raise HTTPException(400, detail={"message":"Something went wrong with Twitter, please try again or contact me @redDevv",
                                         "error from twitter": r.text})
-    new_tweet = Tweet()
-    user.tweets.append()
-    return r.json()
+    tweet = r.json()
 
-@router
+    new_tweet = Tweet(**tweet)
+    # new_tweet.created_at = datetime.strptime(new_tweet.created_at, "%a %b %d %H:%M:%S %z %Y")
+    user.tweets.append(new_tweet)
+    session.commit()
+    return tweet
+
+@router.get("/get_tweet/{id}", response_model=TweetSchema)
+def get_tweet(
+              id: int, 
+              user: User = Depends(get_current_user),
+              config: Settings = Depends(get_settings)
+             )-> TweetSchema:
+    if not user.active:
+        raise HTTPException(401, detail="Your account seems to be inactive, please login with twitter to view tweets")
+
+    url = "https://api.twitter.com/1.1/statuses/show.json"
+    params = dict(id=id, include_entities=True)
+    auth = user.get_oauth1_token()
+    # headers = dict(Authorization=f"Bearer {config.BEARER_TOKEN}")
+
+    r = requests.get(url, params=params, auth=auth)
+    if not r.ok:
+         raise HTTPException(400, detail={"message":"Something went wrong with Twitter, please try again or contact me @redDevv",
+                                        "error from twitter": r.text})
+
+    tweet = r.json()
+    pprint(tweet)
+    return tweet
+
+@router.get("/get_users", response_model=Union[TwitterUser, List[TwitterUser]])
+async def get_users(
+                    ids: Optional[List[int]] = Query(None),
+                    usernames: Optional[List[str]] = Query(None),
+                    user: User = Depends(get_current_user)
+                   ):
+    if usernames:
+        usernames = ",".join(usernames)
+        url = "https://api.twitter.com/2/users/by"
+        params = {"usernames": usernames, "user.fields":"created_at,description,location,username,protected,entities",
+                  "expansions": "pinned_tweet_id"}
+        
+    elif ids:
+        # ids = [str(x) for x in ids]
+        ids = ",".join([str(x) for x in ids])
+        url = "https://api.twitter.com/2/users"
+        params = {"ids":ids, "user.fields":"created_at,description,location,username,protected,entities",
+                  "expansions": "pinned_tweet_id"}
+    
+    else:
+        raise HTTPException(400, detail="Please enter an id or username")
+    
+    auth = user.get_oauth1_token()
+
+    r = requests.get(url, params=params, auth=auth)
+        
+    
+    if not r.ok:
+        raise HTTPException(400, detail={"message":"Something went wrong with Twitter, please try again or contact me @redDevv",
+                                    "error from twitter": r.text})
+    
+    data = r.json()['data']
+    # print(data)
+    if len(data) == 1:
+        # print(data[0])
+        return data[0]
+    else:
+        return data
+# "1324131697017933824"
+# "976206484467052544" "2713870019"
