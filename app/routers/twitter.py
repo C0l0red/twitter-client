@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form
 # from fastapi.responses import JSONResponse
 # from sqlalchemy.orm import Session
 # from app.main import get_db
 from ..models import User
+from ..schemas import Tweet, TwitterUser
 
 import requests
 from requests_oauthlib import OAuth1
@@ -85,3 +86,30 @@ async def twitter_login_step_2(oauth_verifier:str,
         return {"success": f"Your Twitter login is complete, your username has been changed from '{old_username}' to '{user.username}'. Please login again to use Twitter here"}
     
     return {"success": f"Your Twitter login is complete, you can now use Twitter from here"}
+
+def get_oauth1_token(user:User):
+    config: Settings = get_settings()
+    auth = OAuth1(config.API_KEY, 
+                  config.API_SECRET,
+                  user.token,
+                  user.token_secret
+                 )
+    return auth
+
+@router.get("/tweet", response_model=Tweet)
+async def make_tweet(tweet: str = Form(...),
+                     user: User = Depends(get_current_user)
+                     ):
+    url = "https://api.twitter.com/1.1/statuses/update.json"
+    params = dict(status=tweet)
+    auth = get_oauth1_token(user)
+
+    r = requests.post(url, params=params, auth=auth)
+    if not r.ok:
+        raise HTTPException(400, detail={"message":"Something went wrong with Twitter, please try again or contact me @redDevv",
+                                        "error from twitter": r.text})
+    new_tweet = Tweet()
+    user.tweets.append()
+    return r.json()
+
+@router

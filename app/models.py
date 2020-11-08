@@ -1,5 +1,5 @@
 from .database import Base, SessionLocal
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime
 from sqlalchemy.orm import relationship, Session
 # from uuid import uuid4
 from passlib.context import CryptContext
@@ -24,8 +24,9 @@ class User(Base):
     oauth_token = Column(String(50))
     token = Column(String(80))
     token_secret = Column(String(80))
+    tweets:list = relationship("Tweet", back_populates="user", lazy="dynamic")
 
-    def __init__(self, *, username:str, password:str, full_name:Optional[str]=None):
+    def __init__(self, *, username:str, password:str, full_name:Optional[str]=None, **extra):
         session: Session = SessionLocal()
         taken = session.query(User).filter(User.username.ilike(username)).first()
         session.close()
@@ -56,3 +57,13 @@ class User(Base):
                 return user
 
         return None
+
+class Tweet(Base):
+    __tablename__ = "tweet"
+
+    id = Column(Integer, primary_key=True)
+    # tweet_id = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    user = relationship("User", back_populates="tweets")
