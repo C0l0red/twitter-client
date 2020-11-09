@@ -1,7 +1,7 @@
 from .database import Base, SessionLocal
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime
 from sqlalchemy.orm import relationship, Session
-# from uuid import uuid4
+from uuid import uuid4
 from passlib.context import CryptContext
 from typing import Optional
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -9,28 +9,29 @@ from .config import Settings, get_settings
 from requests_oauthlib import OAuth1
 import requests
 from datetime import datetime
+from fastapi import HTTPException
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# make_id = (lambda : uuid4().hex.upper())
+make_id = (lambda : uuid4().hex.upper())
 
 class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String(50), nullable=False)
+    username = Column(String(50), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
     full_name = Column(String(50))
     active = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     requests_made = Column(Integer, default=0)
 
-    # public_id = Column(String(32), default=make_id)
+    public_id = Column(String(32), default=make_id)
     twitter_id = Column(String(32))
     oauth_token = Column(String(50))
     token = Column(String(80))
     token_secret = Column(String(80))
-    tweets:list = relationship("Tweet", back_populates="user", lazy="dynamic")
+    tweets:list = relationship("Tweet", back_populates="user", lazy="joined")
 
     def __init__(self, *, username:str, password:str, full_name:Optional[str]=None, **extra):
         session: Session = SessionLocal()
@@ -38,7 +39,7 @@ class User(Base):
         session.close()
 
         if taken:
-            return
+            raise HTTPException(409, detail="Username taken")
 
         self.username = username
         self.full_name = full_name
@@ -79,7 +80,6 @@ class Tweet(Base):
     __tablename__ = "tweet"
 
     id = Column(Integer, primary_key=True)
-    # tweet_id = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
@@ -99,7 +99,6 @@ class Tweet(Base):
                 self.created_at=datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
             except ValueError:
                 self.created_at = datetime.utcnow()
-        # self.created_at = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
         elif isinstance(created_at, datetime):
             self.created_at = created_at
         else:

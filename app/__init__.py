@@ -6,11 +6,6 @@ from fastapi.security import OAuth2PasswordBearer
 
 from jose import JWTError, jwt
 
-# from .models import User
-# from .schemas import User as UserSchema, Token
-# from app.main import get_db
-# from sqlalchemy.orm import Session
-
 from sqlalchemy.orm import Session
 from . import database, models
 from .config import get_settings
@@ -27,15 +22,11 @@ def get_db():
     finally:
         session.close()
 
-
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
-# router = APIRouter()
 
 def create_access_token(data: dict, 
                         expires_delta: Optional[timedelta] = None,
-                        # config: config.Settings = Depends(get_settings)
                         ):
     config: config.Settings = get_settings()
     to_encode = data.copy()
@@ -60,7 +51,7 @@ def login(form):
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.public_id}, expires_delta=access_token_expires
     )
     token = schemas.Token(access_token=access_token)
 
@@ -79,18 +70,16 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        public_id: str = payload.get("sub")
         
-        if username is None:
+        if public_id is None:
             raise credentials_exception
         
     except JWTError:
         raise credentials_exception
     
-    user: models.User = session.query(models.User).filter(models.User.username.ilike(username)).one_or_none()
+    user: models.User = session.query(models.User).filter(models.User.public_id.ilike(public_id)).one_or_none()
     if user is None:
         raise credentials_exception
-    # if not user.active:
-    #     raise HTTPException(403, detail="Inactive user")
-
+    
     return user

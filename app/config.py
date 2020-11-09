@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     API_KEY: str
     API_SECRET: str
     BEARER_TOKEN: str
+    HOMEPAGE: str
+    DOC: str
 
     class Config:
         env_file = ".env"

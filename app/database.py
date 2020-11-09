@@ -5,7 +5,7 @@ from .config import get_settings, Settings
 
 config: Settings = get_settings()
 
-SQLALCHEMY_DATABASE_URI = config.DATABASE_URI #"sqlite:///./sql_app.db"
+SQLALCHEMY_DATABASE_URI = config.DATABASE_URI
 
 engine = create_engine(SQLALCHEMY_DATABASE_URI, connect_args={"check_same_thread": False})
 
