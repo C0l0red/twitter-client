@@ -80,7 +80,7 @@ async def twitter_login_step_2(verifier:int = Query(...),
 
     user.token = token
     user.token_secret = secret
-    user.twitter_id = twitter_id
+    user.twitter_id = int(twitter_id)
     user.username = username
     user.oauth_token = None
     user.active = True
