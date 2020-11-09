@@ -19,7 +19,8 @@ app = FastAPI(
                             Endpoints with lock icons require login.  
                             Check out the documentation <a href="/redoc">here</a>""",
               version="1.0",
-              openapi_tags=tags_metadata
+              openapi_tags=tags_metadata,
+              docs_url="/"
             )
 
 @app.post("/token", response_model=schemas.Token, include_in_schema=False)
