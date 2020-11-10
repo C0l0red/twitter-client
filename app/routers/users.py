@@ -19,6 +19,7 @@ async def get_user(session: Session= Depends(get_db),
     You have to be logged in to use this, click the padlock icon to login, or sign up with the **Create User** endpoint below  
     Click **Try it out** and then **Execute**.
     """
+    # print(UserSchema.schema_json(indent=2))
     return user
 
 @router.get("/all", response_model=List[UserSchema], include_in_schema=False)

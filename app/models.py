@@ -1,5 +1,5 @@
 from .database import Base, SessionLocal
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime, BigInteger
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime#, BigInteger
 from sqlalchemy.orm import relationship, Session
 from uuid import uuid4
 from passlib.context import CryptContext
@@ -27,7 +27,7 @@ class User(Base):
     requests_made = Column(Integer, default=0)
 
     public_id = Column(String(32), default=make_id)
-    twitter_id = Column(BigInteger(32))
+    twitter_id = Column(String(32))
     oauth_token = Column(String(50))
     token = Column(String(80))
     token_secret = Column(String(80))
@@ -79,7 +79,7 @@ class User(Base):
 class Tweet(Base):
     __tablename__ = "tweet"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(String(32), primary_key=True)
     text = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)

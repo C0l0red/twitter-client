@@ -7,7 +7,7 @@ from datetime import datetime
 
 class TweetModel(BaseModel):
     created_at: datetime = Field(..., alias="created at")
-    id: int = Field(..., example=1324131697017933824)
+    id: str = Field(..., example=1324131697017933824, type="number")
     text: str = Field(..., example="This is a Tweet from Mars")
 
     class Config:
@@ -15,7 +15,7 @@ class TweetModel(BaseModel):
         orm_mode = True
 
 class User(BaseModel):
-    twitter_id: Optional[int] = Field(None, example=52713870019, alias="twitter id")
+    twitter_id: Optional[str] = Field(None, example=52713870019, alias="twitter id")
     username: str = Field(..., example="Red")
     full_name: Optional[str] = Field(None, example="Color Red", alias="full name", title="full name")
     active: Optional[bool] 
@@ -62,7 +62,7 @@ class TwitterUser(BaseModel):
 
 class Tweet(BaseModel):
     created_at: str = Field(..., alias="created at")
-    id: int
+    id: str
     text: str
     source: Optional[str]
     user: TwitterUser
@@ -77,5 +77,5 @@ class Tweet(BaseModel):
         allow_population_by_field_name = True
 
 class TwitterLink(BaseModel):
-    id: int = Field(..., example=1325888640115937283)
+    id: str = Field(..., example=1325888640115937283, format="int64")
     username: str = Field(..., example="redDevv")

@@ -64,7 +64,7 @@ async def twitter_login_step_2(verifier:int = Query(...),
     You have to be logged in to use this, click the padlock icon to login, or sign up with the **Create User** endpoint above.  
     Click **Try it out** and then **Execute**.
     Once it's successful, you can try the other endpoints like **Make Tweet**
-    """
+    """ 
     oauth_token = user.oauth_token
     if not oauth_token:
         raise HTTPException(400, detail="It seems you've not completed step one. Please go back and complete it.")
@@ -73,6 +73,8 @@ async def twitter_login_step_2(verifier:int = Query(...),
             "oauth_verifier": verifier}
     r = requests.post(url, params=params)
     if not r.ok:
+        if str(verifier)[0] == 0:
+            raise HTTPException(400, detail="The verifier token seems to be bad, please repeat Step 1")
         raise HTTPException(400, detail={"message":"Something went wrong with Twitter, please try again", "error": r.text})
     
     old_username = user.username.casefold()
