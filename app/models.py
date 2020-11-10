@@ -27,7 +27,7 @@ class User(Base):
     requests_made = Column(Integer, default=0)
 
     public_id = Column(String(32), default=make_id)
-    twitter_id = Column(BigInteger(32))
+    twitter_id = Column(BigInteger)
     oauth_token = Column(String(50))
     token = Column(String(80))
     token_secret = Column(String(80))
