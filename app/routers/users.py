@@ -41,7 +41,8 @@ async def create_user(form:UserForm = Depends(UserForm),
     """
     Create an account using your Twitter _username_, _password_ and _full name_.  
     Afterwards, click the padlock icon anywhere to login.  
-    To use Twitter, go to **Twitter Login Step 1** to connect your Twitter, and **Step 2** to verify
+    To use Twitter, go to **Twitter Login Step 1** to connect your Twitter, and **Step 2** to verify.  
+    Click **Try it out** and then **Execute**.
     """
     user = User(**form.__dict__)
     session.add(user)

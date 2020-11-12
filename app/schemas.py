@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 from typing import List, Optional
 
 from fastapi import Form
@@ -70,8 +70,24 @@ class Tweet(BaseModel):
     is_quote_status: bool = Field(..., alias="tweet is a quote")
     retweet_count: int = Field(..., alias="retweets")
     favorite_count: int = Field(..., alias='favorites')
-    favorited: bool
-    retweeted: bool
+    favorited: Optional[bool]
+    retweeted: Optional[bool]
+    possibly_sensitive: Optional[bool] = Field(None, alias="possibly sensitive")
+    lang: str = Field(..., alias="language")
+    # user_mentions: Optional[List[TwitterUser]] = Field(None, alias="users mentioned")
+
+    # @root_validator(pre=True)
+    # def unpack(cls, values:dict):
+    #     # print(values)
+    #     if not "users_mentioned" in values:
+    #         print(1)
+    #         if values.get("entities"):
+    #             print(2)
+    #             if values["entities"].get("user_mentions"):
+    #                 print(3)
+    #                 values["user_mentions"] = values["entities"]["user_mentions"]
+    #                 print(values["user_mentions"])
+            
 
     class Config:
         allow_population_by_field_name = True
