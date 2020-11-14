@@ -1,5 +1,6 @@
 import re
 import requests
+
 from fastapi import APIRouter, HTTPException, Depends, Query
 from requests_oauthlib import OAuth1
 
@@ -7,7 +8,6 @@ from app import get_settings, get_db, get_current_user, Session
 from app.models import User
 from app.schemas import TwitterLink
 from app.config import Settings
-
 from . import tweets, users
 
 

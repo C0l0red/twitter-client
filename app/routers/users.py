@@ -1,10 +1,12 @@
+import requests
+
 from fastapi import APIRouter, Depends, HTTPException, Form, Response
 from typing import Optional, List
+from sqlalchemy.orm import Session
+
+from app import get_db, get_current_user, get_settings
 from app.models import User
 from app.schemas import User as UserSchema, UserForm
-from sqlalchemy.orm import Session
-from app import get_db, get_current_user, get_settings
-import requests
 
 router = APIRouter()
 
@@ -55,9 +57,7 @@ async def create_user(form:UserForm = Depends(UserForm),
     return user
 
 @router.put("/", response_model=UserSchema, response_model_exclude=["tweets"], response_model_exclude_unset=True)
-async def update_user(username: Optional[str] = Form(None, min_length=3),
-                    full_name: Optional[str] = Form(None, min_length=3, alias="full name"),
-                    password: Optional[str] = Form(None, min_length=7),
+async def update_user(form: UserForm = Depends(UserForm),
                     session: Session = Depends(get_db),
                     user: User = Depends(get_current_user)
                     ):
@@ -67,7 +67,7 @@ async def update_user(username: Optional[str] = Form(None, min_length=3),
     You have to be logged in to use this, click the padlock icon to login, or sign up with the **Create User** endpoint below  
     Click **Try it out** and then **Execute**.
     """
-    if username:
+    if form.username:
         user.username = username
 
     if full_name:

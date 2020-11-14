@@ -1,8 +1,7 @@
+from datetime import datetime
+from fastapi import Form
 from pydantic import BaseModel, Field, root_validator
 from typing import List, Optional
-
-from fastapi import Form
-from datetime import datetime
 
 
 class TweetModel(BaseModel):
@@ -30,7 +29,7 @@ class UserForm:
 
     def __init__(self,
                 username:str = Form(..., min_length=3, description="Your Twitter username preferably"),
-                password:str = Form(..., min_length=7, ),
+                password:str = Form(..., min_length=7, format="password"),
                 full_name:Optional[str] = Form(None, alias='full name', min_length=3)
                 ):
         self.username = username

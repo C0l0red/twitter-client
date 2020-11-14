@@ -12,7 +12,7 @@ from app.config import Settings
 router = APIRouter()
 
 @router.get("/make-tweet", response_model=TweetSchema)
-async def make_tweet(tweet: str,
+async def make_tweet(tweet: str = Query(...),
                     #  attachment_url: Optional[str] = Query(None, alias="link of tweet to quote", regex="https://twitter.com/([\w_]+)/status/([\d]+)"),
                     #  in_reply_to: Optional[int] = Query(None, alias="link of tweet to reply to", regex="https://twitter.com/([\w_]+)/status/([\d]+)"), 
                      user: User = Depends(get_current_user),
